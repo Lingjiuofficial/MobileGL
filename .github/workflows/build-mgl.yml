@@ -58,10 +58,10 @@ jobs:
           unzip -q gradle-$GRADLE_VER-bin.zip
           echo "$PWD/gradle-$GRADLE_VER/bin" >> $GITHUB_PATH
 
-      - name: 修复 glslang 缺 SPIRV-Tools 的问题
+      - name: 补全 glslang 缺失的 SPIRV-Tools
         run: |
-          sed -i 's/\(ENABLE_OPT\)[[:space:]]*ON/\1                OFF/' CMakeLists.txt
-          grep 'ENABLE_OPT' CMakeLists.txt
+          cd 3rdparty/glslang
+          python3 update_glslang_sources.py
 
       - name: 生成临时签名（仅 Release）
         if: ${{ inputs.variant == 'pluginRelease' }}
