@@ -60,7 +60,8 @@ jobs:
 
       - name: 修复 glslang 缺 SPIRV-Tools 的问题
         run: |
-          sed -i 's/ENABLE_OPT                ON/ENABLE_OPT                OFF/' CMakeLists.txt
+          sed -i 's/\(ENABLE_OPT\)[[:space:]]*ON/\1                OFF/' CMakeLists.txt
+          grep 'ENABLE_OPT' CMakeLists.txt
 
       - name: 生成临时签名（仅 Release）
         if: ${{ inputs.variant == 'pluginRelease' }}
