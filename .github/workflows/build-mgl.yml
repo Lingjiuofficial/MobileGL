@@ -1,13 +1,5 @@
 name: Build MGL (MobileGL)
 
-# === 使用步骤 ===
-# 1. Fork https://github.com/MobileGL-Dev/MobileGL
-# 2. 在 fork 里创建 .github/workflows/build-mgl.yml，粘贴此文件
-# 3. Actions → Build MGL → Run workflow → 选参数 → 等 ~15 分钟
-# 4. 下载 APK artifact → 安装到手机 → ZL2 启动器选 MobileGL 渲染器
-# ================
-# Magma(Vulkan)/Espryt(GLES) 运行时在启动器设置里切换，不用分开编译
-
 on:
   workflow_dispatch:
     inputs:
@@ -56,26 +48,23 @@ jobs:
           mv cmdline-tools "$SDK_ROOT/cmdline-tools/latest"
           yes | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1
           "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
-            "platforms;android-$SDK_PLATFORM" \
-            "build-tools;$BUILD_TOOLS" \
-            "ndk;$NDK_VER"
+            platforms\;android-$SDK_PLATFORM \
+            build-tools\;$BUILD_TOOLS \
+            ndk\;$NDK_VER
 
       - name: 安装 Gradle
         run: |
-          wget -q "https://services.gradle.org/distributions/gradle-$GRADLE_VER-bin.zip"
-          unzip -q "gradle-$GRADLE_VER-bin.zip"
+          wget -q https://services.gradle.org/distributions/gradle-$GRADLE_VER-bin.zip
+          unzip -q gradle-$GRADLE_VER-bin.zip
           echo "$PWD/gradle-$GRADLE_VER/bin" >> $GITHUB_PATH
 
-      - name: 生成临时签名（Release 需要）
+      - name: 生成临时签名（仅 Release）
+        if: ${{ inputs.variant == 'pluginRelease' }}
         run: |
-          keytool -genkey -v \
-            -keystore android-plugin/keystore.jks \
-            -alias mgl-ci \
-            -keyalg RSA -keysize 2048 -validity 365 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=CI, OU=MGL, O=GitHub, L=N/A, S=N/A, C=CN" \
-            -noprompt 2>/dev/null
+          keytool -genkeypair -keystore android-plugin/keystore.jks \
+            -alias mgl-ci -keyalg RSA -keysize 2048 -validity 365 \
+            -storepass android -keypass android \
+            -dname CN=CI -noprompt
           echo "SIGNING_STORE_PASSWORD=android" >> $GITHUB_ENV
           echo "SIGNING_KEY_ALIAS=mgl-ci" >> $GITHUB_ENV
           echo "SIGNING_KEY_PASSWORD=android" >> $GITHUB_ENV
