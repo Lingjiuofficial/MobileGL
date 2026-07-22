@@ -48,15 +48,19 @@ jobs:
           mv cmdline-tools "$SDK_ROOT/cmdline-tools/latest"
           yes | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1
           "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
-            platforms\;android-$SDK_PLATFORM \
-            build-tools\;$BUILD_TOOLS \
-            ndk\;$NDK_VER
+            "platforms;android-$SDK_PLATFORM" \
+            "build-tools;$BUILD_TOOLS" \
+            "ndk;$NDK_VER"
 
       - name: 安装 Gradle
         run: |
           wget -q https://services.gradle.org/distributions/gradle-$GRADLE_VER-bin.zip
           unzip -q gradle-$GRADLE_VER-bin.zip
           echo "$PWD/gradle-$GRADLE_VER/bin" >> $GITHUB_PATH
+
+      - name: 修复 glslang 缺 SPIRV-Tools 的问题
+        run: |
+          sed -i 's/ENABLE_OPT                ON/ENABLE_OPT                OFF/' CMakeLists.txt
 
       - name: 生成临时签名（仅 Release）
         if: ${{ inputs.variant == 'pluginRelease' }}
@@ -73,7 +77,6 @@ jobs:
         run: |
           cat > android-plugin/local.properties << EOF
           sdk.dir=$ANDROID_SDK_ROOT
-          ndk.dir=$ANDROID_NDK_HOME
           EOF
 
           cd android-plugin
