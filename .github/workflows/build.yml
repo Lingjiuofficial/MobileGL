@@ -1,0 +1,48 @@
+name: Build MobileGL
+
+on:
+  push:
+    branches: [ dev-es ]  # 根据 MobileGL 开发分支调整，可能是 dev-es 或 main
+  workflow_dispatch:      # 允许手动触发构建
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository with submodules
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        lfs: true  # 项目使用 Git LFS 管理大文件
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build clang python3 mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+
+    - name: Initialize glslang
+      run: |
+        # 根据 glslang 文档执行其初始化步骤，通常包括以下命令
+        cd thirdparty/glslang
+        python3 ./update_glslang_sources.py || true
+        cd ../..
+
+    - name: Configure with CMake
+      run: |
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --parallel
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: MobileGL-build
+        path: |
+          build/**/*.so
+          build/**/*.a
+          build/**/MobileGL*
